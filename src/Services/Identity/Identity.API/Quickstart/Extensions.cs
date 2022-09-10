@@ -3,7 +3,7 @@ namespace IdentityServerHost.Quickstart.UI;
 public static class Extensions
 {
     /// <summary>
-    /// Checks if the redirect URI is for a native client.
+    /// 检查重定向 URI 是否用于本机客户端。
     /// </summary>
     /// <returns></returns>
     public static bool IsNativeClient(this AuthorizationRequest context)

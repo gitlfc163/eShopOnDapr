@@ -14,12 +14,25 @@ namespace IdentityServerHost.Quickstart.UI
     [AllowAnonymous]
     public class AccountController : Controller
     {
+        //UserManager提供用于在持久性存储中管理用户的 API
         private readonly UserManager<ApplicationUser> _userManager;
+
+        //SignInManager提供用于用户登录的 API
         private readonly SignInManager<ApplicationUser> _signInManager;
+
+        //提供用户界面用来与 IdentityServer 通信的服务
         private readonly IIdentityServerInteractionService _interaction;
+
+        //检索客户端配置
         private readonly IClientStore _clientStore;
+
+        //负责管理支持哪些 authenticationSchemes
         private readonly IAuthenticationSchemeProvider _schemeProvider;
+
+        //为 authenticationScheme 和请求提供适当的 IAuthenticationHandler 实例
         private readonly IAuthenticationHandlerProvider _handlerProvider;
+
+        //事件服务接口
         private readonly IEventService _events;
 
         public AccountController(
@@ -41,7 +54,7 @@ namespace IdentityServerHost.Quickstart.UI
         }
 
         /// <summary>
-        /// Entry point into the login workflow
+        /// 登录工作流程的入口点
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Login(string returnUrl)
@@ -61,16 +74,17 @@ namespace IdentityServerHost.Quickstart.UI
         }
 
         /// <summary>
+        /// 处理来自用户名/密码登录的回调
         /// Handle postback from username/password login
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginInputModel model, string button)
         {
-            // check if we are in the context of an authorization request
+            // 检查ReturnUrl是否在授权请求的上下文中
             var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
 
-            // the user clicked the "cancel" button
+            // 用户点击了“取消”按钮
             if (button != "login")
             {
                 if (context != null)
@@ -83,8 +97,7 @@ namespace IdentityServerHost.Quickstart.UI
                     // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
                     if (context.IsNativeClient())
                     {
-                        // The client is native, so this change in how to
-                        // return the response is for better UX for the end user.
+                        //客户端是本机的，所以这种返回响应方式的改变是为了给最终用户提供更好的用户体验。
                         return this.LoadingPage("Redirect", model.ReturnUrl);
                     }
 
@@ -92,17 +105,21 @@ namespace IdentityServerHost.Quickstart.UI
                 }
                 else
                 {
-                    // since we don't have a valid context, then we just go back to the home page
+                    // 因为我们没有有效的上下文，所以我们只是回到主页
                     return Redirect("~/");
                 }
             }
 
+            //用户输入校验通过后
             if (ModelState.IsValid)
             {
+                //以异步操作的形式登录指定的用户名和密码
                 var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, model.RememberLogin, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
+                    //查找并返回具有指定用户名的用户（如果有）
                     var user = await _userManager.FindByNameAsync(model.Username);
+                    //引发指定的用户登录成功后的处理事件
                     await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: context?.Client.ClientId));
 
                     if (context != null)
@@ -114,7 +131,7 @@ namespace IdentityServerHost.Quickstart.UI
                             return this.LoadingPage("Redirect", model.ReturnUrl);
                         }
 
-                        // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
+                        // 我们可以信任 model.ReturnUrl，因为 GetAuthorizationContextAsync 返回非空
                         return Redirect(model.ReturnUrl);
                     }
 
@@ -146,9 +163,9 @@ namespace IdentityServerHost.Quickstart.UI
             return View(vm);
         }
 
-        
+
         /// <summary>
-        /// Show logout page
+        /// 显示退出页面
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Logout(string logoutId)
@@ -167,6 +184,7 @@ namespace IdentityServerHost.Quickstart.UI
         }
 
         /// <summary>
+        /// 处理注销页面回发
         /// Handle logout page postback
         /// </summary>
         [HttpPost]

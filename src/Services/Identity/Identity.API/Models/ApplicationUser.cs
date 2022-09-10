@@ -1,6 +1,6 @@
 ﻿namespace Microsoft.eShopOnDapr.Services.Identity.API.Models;
 
-// Add profile data for application users by adding properties to the ApplicationUser class
+// 通过向 ApplicationUser 类添加属性来为应用程序用户添加配置文件数据
 public class ApplicationUser : IdentityUser
 {
     [Required]
